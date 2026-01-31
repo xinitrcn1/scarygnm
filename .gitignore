@@ -4,3 +4,4 @@
 !*.hpp
 !*.cpp
 !*.sh
+!README.md
