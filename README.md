@@ -46,7 +46,7 @@ wow so scary, worry not it gets scarier:
 
 ```c++
 scarygnm::Context c;
-c.S_MOV_B32(0, 0);
+c.S_MOV_B32(c.M0, c.s0);
 c.V_INTERP_P1_F32(c.v3, c.v0, c.attr0.x);
 c.V_INTERP_P1_F32(c.v3, c.v1, c.attr0.x);
 c.V_INTERP_P1_F32(c.v2, c.v0, c.attr0.y);

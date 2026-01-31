@@ -53,7 +53,7 @@ void TEST1() {
     {
         // 0xBEFC0300, //S_MOV_B32 M0, s0
         scarygnm::Context c;
-        c.S_MOV_B32(-4, 0);
+        c.S_MOV_B32(c.M0, c.s0);
         assert_eq(c.data[0], 0xBEFC0300);
     }
     {
@@ -71,7 +71,7 @@ void TEST1() {
         // 0xF8001C0F, //EXP mrt0, v2, v0 compr vm done
         // 0x00000002,
         scarygnm::Context c;
-        c.S_MOV_B32(0, 0);
+        c.S_MOV_B32(c.M0, c.s0);
         c.V_INTERP_P1_F32(c.v3, c.v0, c.attr0.x);
         c.V_INTERP_P1_F32(c.v3, c.v1, c.attr0.x);
         c.V_INTERP_P1_F32(c.v2, c.v0, c.attr0.y);
