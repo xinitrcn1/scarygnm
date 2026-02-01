@@ -57,6 +57,12 @@ void TEST1() {
         assert_eq(c.data[0], 0xBEFC0300);
     }
     {
+        // 0xC80C0000, //V_INTERP_P1_F32 v3, v0, attr0.x
+        scarygnm::Context c;
+        c.V_INTERP_P1_F32(c.v3, c.v0, c.attr0.x);
+        assert_eq(c.data[0], 0xC80C0000);
+    }
+    {
         // 0xBEFC0300, //S_MOV_B32 M0, s0
         // 0xC80C0000, //V_INTERP_P1_F32 v3, v0, attr0.x
         // 0xC80D0001, //V_INTERP_P2_F32 v3, v1, attr0.x
@@ -73,17 +79,23 @@ void TEST1() {
         scarygnm::Context c;
         c.S_MOV_B32(c.M0, c.s0);
         c.V_INTERP_P1_F32(c.v3, c.v0, c.attr0.x);
-        c.V_INTERP_P1_F32(c.v3, c.v1, c.attr0.x);
+        c.V_INTERP_P2_F32(c.v3, c.v1, c.attr0.x);
         c.V_INTERP_P1_F32(c.v2, c.v0, c.attr0.y);
-        c.V_INTERP_P1_F32(c.v2, c.v1, c.attr0.y);
+        c.V_INTERP_P2_F32(c.v2, c.v1, c.attr0.y);
         c.V_CVT_PKRTZ_F16_F32(c.v2, c.v3, c.v2);
         c.V_INTERP_P1_F32(c.v3, c.v0, c.attr0.z);
-        c.V_INTERP_P1_F32(c.v0, c.v0, c.attr0.w);
-        c.V_INTERP_P1_F32(c.v3, c.v1, c.attr0.z);
-        c.V_INTERP_P1_F32(c.v0, c.v1, c.attr0.w);
-        c.V_CVT_PKRTZ_F16_F32(c.v0, c.v3, c.v0);
-        assert_eq(c.data[0], 0x5E040503);
-        assert_eq(c.data[1], 0x5E000103);
+        // c.V_INTERP_P1_F32(c.v0, c.v0, c.attr0.w);
+        // c.V_INTERP_P2_F32(c.v3, c.v1, c.attr0.z);
+        // c.V_INTERP_P2_F32(c.v0, c.v1, c.attr0.w);
+        // c.V_CVT_PKRTZ_F16_F32(c.v0, c.v3, c.v0);
+        assert_eq(c.data[0], 0xBEFC0300);
+        assert_eq(c.data[1], 0xC80C0000);
+        assert_eq(c.data[2], 0xC80D0001);
+        assert_eq(c.data[3], 0xC8080100);
+        assert_eq(c.data[4], 0xC8090101);
+        assert_eq(c.data[5], 0x5E040503);
+        assert_eq(c.data[6], 0xC80C0200);
+        assert_eq(c.data[7], 0xC8000300);
     }
     {
         scarygnm::Context c;

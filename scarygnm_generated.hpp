@@ -602,9 +602,9 @@ void S_BUFFER_LOAD_DWORDX8(SGPR_Indexed src0, SGPR_Indexed src1, unsigned imm_of
 void S_BUFFER_LOAD_DWORDX16(SGPR_Indexed src0, SGPR_Indexed src1, unsigned imm_offset) { SMRD_OP(0x0C, src0, src1, imm_offset); }
 void S_MEMTIME(SGPR_Indexed src0, SGPR_Indexed src1, unsigned imm_offset) { SMRD_OP(0x1E, src0, src1, imm_offset); }
 void S_DCACHE_INV(SGPR_Indexed src0, SGPR_Indexed src1, unsigned imm_offset) { SMRD_OP(0x1F, src0, src1, imm_offset); }
-void V_INTERP_P1_F32(VGPR vdst, unsigned src, AttributeElement a) { VINTRP_OP(0, vdst, src, a); }
-void V_INTERP_P2_F32(VGPR vdst, unsigned src, AttributeElement a) { VINTRP_OP(1, vdst, src, a); }
-void V_INTERP_MOV_F32(VGPR vdst, unsigned src, AttributeElement a) { VINTRP_OP(2, vdst, src, a); }
+void V_INTERP_P1_F32(VGPR vdst, VGPR vsrc, AttributeElement a) { VINTRP_OP(0, vdst, vsrc, a); }
+void V_INTERP_P2_F32(VGPR vdst, VGPR vsrc, AttributeElement a) { VINTRP_OP(1, vdst, vsrc, a); }
+void V_INTERP_MOV_F32(VGPR vdst, VGPR vsrc, AttributeElement a) { VINTRP_OP(2, vdst, vsrc, a); }
 void BUFFER_LOAD_FORMAT_X(VGPR vdata, VGPR vaddr, unsigned svsharp, unsigned imm_offset, int32_t soffset, BufFlags flags) { MUBUF_OP(0x00, vdata, vaddr, svsharp, imm_offset, soffset, flags); }
 void BUFFER_LOAD_FORMAT_X(VGPR_Indexed vdata, VGPR vaddr, SGPR_Indexed svsharp, unsigned imm_offset, int32_t soffset, BufFlags flags) { MUBUF_OP(0x00, vdata, vaddr, svsharp, imm_offset, soffset, flags); }
 void BUFFER_LOAD_FORMAT_XY(VGPR vdata, VGPR vaddr, unsigned svsharp, unsigned imm_offset, int32_t soffset, BufFlags flags) { MUBUF_OP(0x01, vdata, vaddr, svsharp, imm_offset, soffset, flags); }

@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
             break;
         case VINTRP:
             printf(
-                "void V_%s(VGPR vdst, unsigned src, AttributeElement a) { VINTRP_OP(%s, vdst, src, a); }\n"
+                "void V_%s(VGPR vdst, VGPR vsrc, AttributeElement a) { VINTRP_OP(%s, vdst, vsrc, a); }\n"
                 , name, value);
             break;
         case NONE:

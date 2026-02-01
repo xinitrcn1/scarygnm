@@ -83,13 +83,6 @@ namespace scarygnm {
             uint64_t : 38;
         };
 
-        struct TVINTRP {
-            uint32_t : 8;
-            uint32_t CHAN : 2;
-            uint32_t ATTR : 6;
-            uint32_t : 16;
-        };
-
         struct TEXP {
             uint64_t EN : 4;
             uint64_t TARGET : 6;
@@ -202,15 +195,24 @@ namespace scarygnm {
         static constexpr VGPR_IndexedFactory v;
         static constexpr SGPR_IndexedFactory s;
 
-        struct AttributeElement { size_t value; };
+        struct AttributeElement { size_t attr, chan; };
         struct AttributeElementFactory {
             AttributeElement x;
             AttributeElement y;
             AttributeElement z;
             AttributeElement w;
         };
-        static constexpr AttributeElementFactory attr0{0, 1, 2, 3};
+#define MAKE_ATTR(N) { {N, 0}, {N, 1}, {N, 2}, {N, 3} }
+        static constexpr AttributeElementFactory attr0 = MAKE_ATTR(0);
+        static constexpr AttributeElementFactory attr1 = MAKE_ATTR(1);
+        static constexpr AttributeElementFactory attr2 = MAKE_ATTR(2);
+        static constexpr AttributeElementFactory attr3 = MAKE_ATTR(3);
+        static constexpr AttributeElementFactory attr4 = MAKE_ATTR(4);
+        static constexpr AttributeElementFactory attr5 = MAKE_ATTR(5);
+        static constexpr AttributeElementFactory attr6 = MAKE_ATTR(6);
+        static constexpr AttributeElementFactory attr7 = MAKE_ATTR(7);
         // TODO: how the fuck are these mfers encoded?
+#undef MAKE_ATTR
 
         std::vector<uint32_t> data;
         void VOP1_OP(unsigned op, VGPR vdst, unsigned src0) {
@@ -355,28 +357,41 @@ namespace scarygnm {
             data.push_back(reinterpret_cast<uint32_t*>(&cmd)[1]);
         }
         void MUBUF_OP(unsigned op, VGPR_Indexed vdata, VGPR vaddr, SGPR_Indexed svsharp, unsigned imm_offset, int32_t soffset, BufFlags flags) {
-            // uint64_t count : 3, size : 5;
-            // assert(int(vdata.end) - int(vdata.start) == int(svsharp.end) - int(svsharp.start));
             MUBUF_OP(op, vdata.start, vaddr, svsharp.start, imm_offset, soffset, flags);
         }
-        void VINTRP_OP(unsigned op, VGPR vdst, unsigned src, AttributeElement a) {
-            assert(false);
+        void VINTRP_OP(unsigned op, VGPR vdst, VGPR vsrc, AttributeElement a) {
+            struct TVINTRP {
+                uint32_t VSRC : 8;
+                uint32_t CHAN : 2;
+                uint32_t ATTR : 6;
+                uint32_t OP : 2;
+                uint32_t VDST : 8;
+                uint32_t ENCODE : 6;
+            } cmd = {};
+            static_assert(sizeof(cmd) == 4);
+            cmd.ENCODE = H_VINTRP;
+            cmd.OP = op;
+            cmd.VDST = vdst.value - VGPR_BASE;
+            cmd.VSRC = vsrc.value - VGPR_BASE;
+            cmd.CHAN = a.chan;
+            cmd.ATTR = a.attr;
+            data.push_back(reinterpret_cast<uint32_t*>(&cmd)[0]);
         }
         void SMRD_OP(unsigned op, SGPR_Indexed src0, SGPR_Indexed src1, unsigned imm_offset) {
             struct TSMRD {
                 uint32_t OFFSET : 8;
                 uint32_t IMM : 1;
-                uint32_t COUNT : 5;
+                uint32_t SBASE : 6;
                 uint32_t SDST : 7;
-                uint32_t OP : 6;
+                uint32_t OP : 5;
                 uint32_t ENCODE : 5;
             } cmd = {};
             static_assert(sizeof(cmd) == 4);
             cmd.ENCODE = H_SMRD;
             cmd.OP = op;
             cmd.OFFSET = src1.start;
+            cmd.SBASE = src0.end - src1.start;
             cmd.IMM = imm_offset;
-            cmd.COUNT = src0.end - src1.start;
             cmd.SDST = src0.start;
             data.push_back(reinterpret_cast<uint32_t*>(&cmd)[0]);
         }
@@ -411,21 +426,24 @@ namespace scarygnm {
             data.push_back(reinterpret_cast<uint32_t*>(&cmd)[0]);
         }
         void S_MOV_B32(unsigned sdst, unsigned ssrc) {
-            TSOP1 cmd = { .ENCODE = H_SOP1 };
+            TSOP1 cmd = {};
+            cmd.ENCODE = H_SOP1;
             cmd.OP = 0x03;
             cmd.SDST = sdst;
             cmd.SSRC = ssrc;
             data.push_back(reinterpret_cast<uint32_t*>(&cmd)[0]);
         }
         void S_MOV_B64(unsigned sdst, unsigned ssrc) {
-            TSOP1 cmd = { .ENCODE = H_SOP1 };
+            TSOP1 cmd = {};
+            cmd.ENCODE = H_SOP1;
             cmd.OP = 0x04;
             cmd.SDST = sdst;
             cmd.SSRC = ssrc;
             data.push_back(reinterpret_cast<uint32_t*>(&cmd)[0]);
         }
         void V_READFIRSTLANE_B32(unsigned sdst, unsigned vsrc) {
-            TVOP1 cmd = { .ENCODE = H_VOP1 };
+            TVOP1 cmd = {};
+            cmd.ENCODE = H_VOP1;
             cmd.OP = 0x02;
             cmd.VDST = sdst;
             cmd.SRC0 = vsrc;

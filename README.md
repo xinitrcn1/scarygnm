@@ -60,3 +60,9 @@ c.V_CVT_PKRTZ_F16_F32(c.v0, c.v3, c.v0);
 ```
 
 indeed, scary has been achieved.
+
+s = 0 to 127
+imm > 128 < 192
+v > 255
+
+v[4,7] -> syntatic sugar for v[4:7] which is syntatic sugar for v4
