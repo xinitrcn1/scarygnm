@@ -113,6 +113,34 @@ namespace scarygnm {
             uint32_t ENCODE : 7;
         };
 
+        enum TB_DataFormat : uint32_t {
+            INVALID,
+            _8,
+            _16,
+            _8_8,
+            _32,
+            _16_16,
+            _10_11_11,
+            _10_10_10_2,
+            _2_10_10_10,
+            _8_8_8_8,
+            _32_32,
+            _16_16_16_16,
+            _32_32_32,
+            _32_32_32_32
+        };
+        enum TB_NumberFormat : uint32_t {
+            UNORM,
+            SNORM,
+            USCALED,
+            SSCALED,
+            UINT,
+            SINT,
+            SNORM_OGL,
+            FLOAT,
+        };
+
+
         struct TMTBUF {
             uint32_t OFFSET : 12;
             uint32_t OFFEN : 1;
@@ -322,24 +350,26 @@ namespace scarygnm {
         void MUBUF_OP(unsigned op, VGPR vdata, VGPR vaddr, unsigned svsharp, unsigned imm_offset, int32_t soffset, BufFlags flags) {
             assert(vdata.value >= VGPR_BASE && vaddr.value >= VGPR_BASE);
             struct TMUBUF {
-                uint32_t OFFSET : 12;
-                uint32_t OFFEN : 1;
-                uint32_t IDXEN : 1;
-                uint32_t GLC : 1;
-                uint32_t : 1;
-                uint32_t LDS : 1;
-                uint32_t : 1;
-                uint32_t OP : 7;
-                uint32_t : 1;
-                uint32_t ENCODE : 6;
-                uint32_t VADDR : 8;
-                uint32_t VDATA : 8;
-                uint32_t SRSRC : 5;
-                uint32_t : 1;
-                uint32_t SLC : 1;
-                uint32_t TFE : 1;
-                uint32_t SOFFSET : 8;
+                uint32_t OFFSET : 12; //11:0
+                uint32_t OFFEN : 1; //12
+                uint32_t IDXEN : 1; //13
+                uint32_t GLC : 1; //14
+                uint32_t ADDR64 : 1; //15
+                uint32_t LDS : 1; //16
+                uint32_t : 1; //17
+                uint32_t OP : 7; //[15:8]???
+                uint32_t : 1; //25
+                uint32_t ENCODE : 6; //[31:26]
+                uint32_t VADDR : 8; //[39:32]
+                uint32_t VDATA : 8; //[47:40]
+                uint32_t SRSRC : 5; //[52:48]
+                uint32_t : 1; //53
+                uint32_t SLC : 1; //54
+                uint32_t TFE : 1; //55
+                uint32_t SOFFSET : 6; //[63:56]
+                uint32_t I_DONT_KNOW : 2; //WHY THE FUCK IS THIS-
             } cmd = {};
+            static_assert(sizeof(TMUBUF) == 8);
             cmd.ENCODE = H_MUBUF;
             cmd.OP = op;
             cmd.VDATA = (vdata.value - VGPR_BASE);
@@ -353,6 +383,7 @@ namespace scarygnm {
             cmd.LDS = (flags & BUF_LDS) != 0;
             cmd.SLC = (flags & BUF_SLC) != 0;
             cmd.TFE = (flags & BUF_TFE) != 0;
+            cmd.I_DONT_KNOW = 0x2;
             data.push_back(reinterpret_cast<uint32_t*>(&cmd)[0]);
             data.push_back(reinterpret_cast<uint32_t*>(&cmd)[1]);
         }
@@ -377,7 +408,7 @@ namespace scarygnm {
             cmd.ATTR = a.attr;
             data.push_back(reinterpret_cast<uint32_t*>(&cmd)[0]);
         }
-        void SMRD_OP(unsigned op, SGPR_Indexed src0, SGPR_Indexed src1, unsigned imm_offset) {
+        void SMRD_OP(unsigned op, SGPR_Indexed sdst, SGPR_Indexed src1, unsigned imm_offset) {
             struct TSMRD {
                 uint32_t OFFSET : 8;
                 uint32_t IMM : 1;
@@ -387,12 +418,13 @@ namespace scarygnm {
                 uint32_t ENCODE : 5;
             } cmd = {};
             static_assert(sizeof(cmd) == 4);
+            assert((src1.start & 1) == 0); //SGBASE * 2
             cmd.ENCODE = H_SMRD;
             cmd.OP = op;
-            cmd.OFFSET = src1.start;
-            cmd.SBASE = src0.end - src1.start;
-            cmd.IMM = imm_offset;
-            cmd.SDST = src0.start;
+            cmd.OFFSET = imm_offset;
+            cmd.SBASE = src1.start / 2;
+            cmd.IMM = 1;
+            cmd.SDST = sdst.start;
             data.push_back(reinterpret_cast<uint32_t*>(&cmd)[0]);
         }
 
@@ -406,6 +438,72 @@ namespace scarygnm {
             TSOPP cmd = {};
             cmd.ENCODE = H_SOPP;
             cmd.OP = 0x01;
+            data.push_back(reinterpret_cast<uint32_t*>(&cmd)[0]);
+        }
+        void S_ICACHE_INV() {
+            TSOPP cmd = {};
+            cmd.ENCODE = H_SOPP;
+            cmd.OP = 0x13;
+            data.push_back(reinterpret_cast<uint32_t*>(&cmd)[0]);
+        }
+        void S_INCPERFLEVEL(uint16_t simm) {
+            TSOPP cmd = {};
+            cmd.ENCODE = H_SOPP;
+            cmd.OP = 0x14;
+            cmd.SIMM = simm;
+            data.push_back(reinterpret_cast<uint32_t*>(&cmd)[0]);
+        }
+        void S_SENDMSG(uint16_t simm) {
+            TSOPP cmd = {};
+            cmd.ENCODE = H_SOPP;
+            cmd.OP = 0x10;
+            cmd.SIMM = simm;
+            data.push_back(reinterpret_cast<uint32_t*>(&cmd)[0]);
+        }
+        void S_SENDMSGHALT(uint16_t simm) {
+            TSOPP cmd = {};
+            cmd.ENCODE = H_SOPP;
+            cmd.OP = 0x11;
+            cmd.SIMM = simm;
+            data.push_back(reinterpret_cast<uint32_t*>(&cmd)[0]);
+        }
+        void S_SETHALT() {
+            TSOPP cmd = {};
+            cmd.ENCODE = H_SOPP;
+            cmd.OP = 0x0D;
+            data.push_back(reinterpret_cast<uint32_t*>(&cmd)[0]);
+        }
+        void S_SETKILL() {
+            TSOPP cmd = {};
+            cmd.ENCODE = H_SOPP;
+            cmd.OP = 0x0B;
+            data.push_back(reinterpret_cast<uint32_t*>(&cmd)[0]);
+        }
+        void S_SETPRIO(uint16_t simm) {
+            TSOPP cmd = {};
+            cmd.ENCODE = H_SOPP;
+            cmd.OP = 0x0F;
+            cmd.SIMM = simm;
+            data.push_back(reinterpret_cast<uint32_t*>(&cmd)[0]);
+        }
+        void S_SLEEP(uint16_t simm) {
+            TSOPP cmd = {};
+            cmd.ENCODE = H_SOPP;
+            cmd.OP = 0x0E;
+            cmd.SIMM = simm;
+            data.push_back(reinterpret_cast<uint32_t*>(&cmd)[0]);
+        }
+        void S_TRAP(uint16_t simm) {
+            TSOPP cmd = {};
+            cmd.ENCODE = H_SOPP;
+            cmd.OP = 0x12;
+            cmd.SIMM = simm;
+            data.push_back(reinterpret_cast<uint32_t*>(&cmd)[0]);
+        }
+        void S_TTRACEDATA() {
+            TSOPP cmd = {};
+            cmd.ENCODE = H_SOPP;
+            cmd.OP = 0x16;
             data.push_back(reinterpret_cast<uint32_t*>(&cmd)[0]);
         }
         void S_WAITCNT(uint32_t lgkmcnt, uint32_t expcnt = 0x07, uint32_t vmcnt = 0x0f) {
@@ -470,8 +568,45 @@ namespace scarygnm {
         static inline unsigned s14 = (SGPR_BASE+14);
         static inline unsigned s15 = (SGPR_BASE+15);
 
-        static inline unsigned M0 = unsigned(-4);
-        // TODO: Does have M1,M2,M3?
+        // Holds the low Dword of the flat-scratch memory descriptor.
+        static inline unsigned FLAT_SCR_LO = 104;
+        static inline unsigned FLAT_SCR_HI = 105;
+        static inline unsigned VCC_LO = 106;
+        static inline unsigned VCC_HI = 107;
+        static inline unsigned TBA_LO = 108;
+        static inline unsigned TBA_HI = 109;
+        static inline unsigned TMA_LO = 110;
+        static inline unsigned TMA_HI = 111;
+        // Constant 0
+        static inline unsigned FCONST_0 = 128;
+        static inline unsigned ICONST_0 = 128;
+        // 129-192 -> int 1 to 64
+        // 193-208 -> int -1 to -16
+        // Can the constant be encoded in the SGPR number?
+        [[nodiscard]] inline bool CanSGPR_ICONST(int c) noexcept {
+            return c == 0 || (c < 0 && c >= -16) || (c > 0 && c <= 64);
+        }
+        // Convert a constant into a SGPR ICONST
+        [[nodiscard]] inline unsigned SGPR_ICONST(int c) noexcept {
+            return c < 0 ? 192 - (c + 1) : 128 + c;
+        }
+        // +0.5
+        static inline unsigned FCONST_0_5 = 240;
+        // -0.5
+        static inline unsigned FCONST_M0_5 = 241;
+        static inline unsigned FCONST_1_0 = 242;
+        static inline unsigned FCONST_M1_0 = 243;
+        static inline unsigned FCONST_2_0 = 244;
+        static inline unsigned FCONST_M2_0 = 245;
+        static inline unsigned FCONST_4_0 = 246;
+        static inline unsigned FCONST_M4_0 = 247;
+
+        static inline unsigned M0 = 124;
+        static inline unsigned EXEC_LO = 126;
+        static inline unsigned EXEC_HI = 127;
+        static inline unsigned VCCZ = 251;
+        static inline unsigned EXECZ = 252;
+        static inline unsigned SCC = 253;
 
         static inline VGPR v0 = VGPR(VGPR_BASE+0);
         static inline VGPR v1 = VGPR(VGPR_BASE+1);

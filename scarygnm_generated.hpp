@@ -601,7 +601,7 @@ void S_BUFFER_LOAD_DWORDX4(SGPR_Indexed src0, SGPR_Indexed src1, unsigned imm_of
 void S_BUFFER_LOAD_DWORDX8(SGPR_Indexed src0, SGPR_Indexed src1, unsigned imm_offset) { SMRD_OP(0x0B, src0, src1, imm_offset); }
 void S_BUFFER_LOAD_DWORDX16(SGPR_Indexed src0, SGPR_Indexed src1, unsigned imm_offset) { SMRD_OP(0x0C, src0, src1, imm_offset); }
 void S_MEMTIME(SGPR_Indexed src0, SGPR_Indexed src1, unsigned imm_offset) { SMRD_OP(0x1E, src0, src1, imm_offset); }
-void S_DCACHE_INV(SGPR_Indexed src0, SGPR_Indexed src1, unsigned imm_offset) { SMRD_OP(0x1F, src0, src1, imm_offset); }
+void S_DCACHE_INV() { SMRD_OP(0x1F, {}, {}, 0); }
 void V_INTERP_P1_F32(VGPR vdst, VGPR vsrc, AttributeElement a) { VINTRP_OP(0, vdst, vsrc, a); }
 void V_INTERP_P2_F32(VGPR vdst, VGPR vsrc, AttributeElement a) { VINTRP_OP(1, vdst, vsrc, a); }
 void V_INTERP_MOV_F32(VGPR vdst, VGPR vsrc, AttributeElement a) { VINTRP_OP(2, vdst, vsrc, a); }

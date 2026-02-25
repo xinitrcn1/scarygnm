@@ -10,6 +10,7 @@ enum inst_kind {
     VOP3,
     SMRD,
     MUBUF,
+    MTBUF,
     VINTRP,
     NONE
 };
@@ -20,6 +21,7 @@ enum inst_kind get_inst_kind(const char *name) {
     if (strncmp(name, "VOP3_", 5) == 0) return VOP3;
     if (strncmp(name, "SMRD_", 5) == 0) return SMRD;
     if (strncmp(name, "MUBUF", 5) == 0) return MUBUF;
+    if (strncmp(name, "MTBUF", 5) == 0) return MTBUF;
     if (strncmp(name, "VINTR", 5) == 0) return VINTRP;
     return NONE;
 }
@@ -85,9 +87,13 @@ int main(int argc, char *argv[]) {
                 , name, value);
             break;
         case SMRD:
-            printf(
-                "void S_%s(SGPR_Indexed src0, SGPR_Indexed src1, unsigned imm_offset) { SMRD_OP(%s, src0, src1, imm_offset); }\n"
-                , name, value);
+            if (strcmp(name, "DCACHE_INV") == 0
+            || strcmp(name, "DCACHE_INV_VOL") == 0) {
+                // no params
+                printf("void S_%s() { SMRD_OP(%s, {}, {}, 0); }\n", name, value);
+            } else {
+                printf("void S_%s(SGPR_Indexed src0, SGPR_Indexed src1, unsigned imm_offset) { SMRD_OP(%s, src0, src1, imm_offset); }\n", name, value);
+            }
             break;
         case MUBUF:
             printf(
